@@ -233,6 +233,12 @@ d3.box = function() {
           .attr("y", x1)
           .style("opacity", 1e-6)
           .remove();
+
+      g.selectAll("text").attr("display", "none");
+
+      /*g.on('mouseover', function(d){
+          g.selectAll("text").attr("display", "normal");
+      });*/
     });
     d3.timer.flush();
   }

@@ -9,9 +9,13 @@ body {
 .box line,
 .box rect,
 .box circle {
-  fill: #fff;
+  fill: red;
   stroke: #000;
   stroke-width: 1.5px;
+}
+
+.box text {
+  z-index: 100;
 }
 
 .box .center {
@@ -21,4 +25,8 @@ body {
 .box .outlier {
   fill: none;
   stroke: #ccc;
+}
+
+p.citation, p.figure_label {
+  margin-left: 20px;
 }
