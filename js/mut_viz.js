@@ -29,19 +29,19 @@ d3.csv("../viz/data/signature_distributions_t.csv", function(error, csv) {
 
   });
 
-  chart.domain([0, 0.8]);
+  chart.domain([0, 0.9]);
 
   // Create y-axis container
   var yAxisContainer = d3.select("#yaxis").append("svg")
           .attr("class", "y-axis")
           .attr("width", yAxisWidth)
-          .attr("height", boxPlotHeight + boxPlotMargin.bottom)
+          .attr("height", boxPlotHeight + boxPlotMargin.top + boxPlotMargin.bottom)
           .style("display", "inline")
           .style("float", "left");
 
   // Create y-axis scale (based on plot size)
   var yAxisScale = d3.scale.linear()
-      .domain([0, 0.8])
+      .domain([0, 0.9])
       .range([boxPlotHeight, 0]);
 
   // Create y-axis
@@ -55,7 +55,7 @@ d3.csv("../viz/data/signature_distributions_t.csv", function(error, csv) {
   var yAxisGroup = yAxisContainer.append("g")
                     .call(yAxis)
                     .selectAll("text")
-                       .attr("y", 0)
+                       .attr("y", boxPlotMargin.top)
                        .attr("x", yAxisWidth - 10)
                        .attr("dx", "0em")
                        .attr("dy", "0em")
