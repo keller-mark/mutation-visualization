@@ -11,7 +11,7 @@ var chart = d3.box()
 
 
 
-d3.csv("../viz/data/signature_distributions_t.csv", function(error, csv) {
+d3.csv("data/signature_distributions_t.csv", function(error, csv) {
   if (error) throw error;
 
   var data = [];
@@ -51,7 +51,7 @@ d3.csv("../viz/data/signature_distributions_t.csv", function(error, csv) {
                      .orient("left");
 
 
-  // Call xAxis, append as SVG, rotate labels to be vertical
+  // Call yAxis, append as SVG, rotate labels to be vertical
   var yAxisGroup = yAxisContainer.append("g")
                     .call(yAxis)
                     .selectAll("text")
@@ -69,7 +69,7 @@ d3.csv("../viz/data/signature_distributions_t.csv", function(error, csv) {
                         .attr("transform", "rotate(-90)")
                         .text("Distribution of signature contribution");
 
-
+  // Remove axis line
   d3.select("path").remove();
 
   // Create box plots
