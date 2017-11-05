@@ -237,18 +237,17 @@ d3.box = function() {
       g.selectAll("text").attr("display", "none");
 
       g.on('mouseover', function(d){
-        //g.selectAll("text").attr("display", "normal");
+        /*g.selectAll("text").attr("display", "normal");
         var plotText = g.selectAll("text").each(function(d, i) {
           var textElement = d3.select(this);
           g.append("text")
             .text(textElement.innerHTML)
             .attr("dy", textElement.attr("dy"));
-        });
+        });*/
       });
 
       g.on('mouseleave', function(d){
-        g.selectAll(".dot").remove();
-        g.selectAll("text").attr("display", "none");
+        /*g.selectAll("text").attr("display", "none");*/
       });
 
 
