@@ -1,7 +1,7 @@
 body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
-
+/* Box Plots */
 .box {
   font: 10px sans-serif;
 }
@@ -27,6 +27,64 @@ body {
   stroke: #ccc;
 }
 
+/* Figure Descriptions */
 p.citation, p.figure_label {
   margin-left: 20px;
+}
+
+#options {
+  margin-bottom: 20px;
+  padding-left: 30px;
+  width: 100%;
+  float: left;
+  display: block;
+}
+
+/* Toggle Switch */
+input[type=checkbox]{
+	height: 0;
+	width: 0;
+	visibility: hidden;
+}
+
+label[for="switch"] {
+	cursor: pointer;
+	width: 50px;
+	height: 25px;
+	background: grey;
+	border-radius: 25px;
+	position: relative;
+  display: inline;
+  float: left;
+}
+
+label[for="switch"]:after {
+	content: '';
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	width: 15px;
+	height: 15px;
+	background: #fff;
+	border-radius: 25px;
+	transition: 0.3s;
+}
+
+input:checked + label[for="switch"] {
+	background: #bada55;
+}
+
+input:checked + label[for="switch"]:after {
+	left: calc(100% - 5px);
+	transform: translateX(-100%);
+}
+
+label[for="switch"]:active:after {
+	width: 130px;
+}
+
+.toggle_label {
+  float: left;
+  margin-left: 5px;
+  margin-top: 3px;
 }

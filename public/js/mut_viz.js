@@ -29,10 +29,10 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
 
   });
 
-  chart.domain([0, 0.9]);
+  chart.domain([0, 1]);
 
   // Create y-axis container
-  var yAxisContainer = d3.select("#yaxis").append("svg")
+  var yAxisContainer = d3.select("#visualization").append("svg")
           .attr("class", "y-axis")
           .attr("width", yAxisWidth)
           .attr("height", boxPlotHeight + boxPlotMargin.top + boxPlotMargin.bottom)
@@ -73,7 +73,7 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
   d3.select("path").remove();
 
   // Create box plots
-  var svg = d3.select("#visualization").selectAll("svg")
+  var svg = d3.select("#visualization").append("g").selectAll("svg")
       .data(data)
     .enter().append("svg")
       .attr("class", "box")
@@ -87,7 +87,7 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
   var xAxisContainer = d3.select("#visualization").append("svg")
       .style("margin-left", yAxisWidth)
       .attr("width", ((boxPlotMargin.left + boxPlotWidth + boxPlotMargin.right) * 30))
-      .attr("height", 100);
+      .attr("height", 60);
 
 
 
@@ -141,4 +141,42 @@ function iqr(k) {
     while (d[--j] > q3 + iqr);
     return [i, j];
   };
+}
+
+var jitterCheckbox = document.getElementById('switch');
+
+jitterCheckbox.addEventListener('change', function() {
+    if(this.checked) {
+      addJitterPlots();
+    } else {
+      removeJitterPlots();
+    }
+});
+
+function addJitterPlots() {
+  var width = boxPlotWidth + boxPlotMargin.left,
+    height=boxPlotHeight + boxPlotMargin.top;
+
+  var scatterYScale = d3.scale.linear().range([boxPlotHeight, 0]),
+    scatterYMap = function(d) { return scatterYScale(d) + boxPlotMargin.top;};
+
+  d3.select("#visualization").selectAll(".box").each(function(d, i) {
+    var g = d3.select(this);
+    g.selectAll(".dot")
+      .data(d)
+    .enter().append("circle")
+      .attr("class", "dot")
+      .attr("r", 3.5)
+      .attr("cx", function(d) { return Math.random()*(width/2) + (width/4) + (boxPlotMargin.left/2); })
+      .attr("cy", scatterYMap)
+      .style("fill", "#000000")
+      .style("opacity", "0.2");
+  });
+}
+
+function removeJitterPlots() {
+  d3.select("#visualization").selectAll(".box").each(function(d, i) {
+    var g = d3.select(this);
+    g.selectAll(".dot").remove();
+  });
 }
