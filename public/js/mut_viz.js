@@ -226,15 +226,31 @@ function addJitterPlots() {
 
   d3.select("#visualization").selectAll(".box").each(function(d, i) {
     var g = d3.select(this);
-    g.selectAll(".dot")
+    g.selectAll(".jitter-dot")
       .data(d)
     .enter().append("circle")
-      .attr("class", "dot")
+      .attr("class", "jitter-dot")
       .attr("r", 3.5)
       .attr("cx", function(d) { return Math.random()*((boxPlotWidth + boxPlotMargin.left)/2) + ((boxPlotWidth + boxPlotMargin.left)/4) + (boxPlotMargin.left/2); })
       .attr("cy", scatterYMap)
+      .style("stroke-width", 0)
       .style("fill", "#000")
-      .style("opacity", "0.2");
+      .style("opacity", "0.2")
+      .on("mouseover", function(d, i) {
+        console.log(d);
+        var currentCircle = d3.select(this);
+        currentCircle
+          .attr("r", 6)
+          .style("fill", "blue")
+          .style("opacity", "1");
+      })
+      .on("mouseleave", function() {
+        var currentCircle = d3.select(this);
+        currentCircle
+          .attr("r", 3.5)
+          .style("fill", "#000")
+          .style("opacity", "0.2");
+      });
   });
 }
 
@@ -243,6 +259,6 @@ function removeJitterPlots() {
 
   d3.select("#visualization").selectAll(".box").each(function(d, i) {
     var g = d3.select(this);
-    g.selectAll(".dot").remove();
+    g.selectAll(".jitter-dot").remove();
   });
 }

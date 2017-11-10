@@ -104,3 +104,7 @@ label[for="switch"]:active:after {
 .box-text {
   font-family: Verdana;
 }
+
+.jitter-dot {
+  cursor: pointer;
+}
