@@ -10,8 +10,6 @@ var chart = d3.box()
     .height(boxPlotHeight)
     .domain([0,1]);
 
-
-
 d3.csv("data/signature_distributions_t.csv", function(error, csv) {
   if (error) throw error;
 
@@ -30,7 +28,26 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
 
   });
 
+  createBoxPlots(data);
 
+});
+
+
+// Returns a function to compute the interquartile range.
+function iqr(k) {
+  return function(d, i) {
+    var q1 = d.quartiles[0],
+        q3 = d.quartiles[2],
+        iqr = (q3 - q1) * k,
+        i = -1,
+        j = d.length;
+    while (d[++i] < q1 - iqr);
+    while (d[--j] > q3 + iqr);
+    return [i, j];
+  };
+}
+
+function boxPlotAxisY() {
   // Create y-axis container
   var yAxisContainer = d3.select("#visualization").append("svg")
           .attr("class", "y-axis")
@@ -71,6 +88,55 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
 
   // Remove axis line
   d3.select("path").remove();
+}
+
+function boxPlotAxisX() {
+  // Create x-axis container
+  var xAxisContainer = d3.select("#visualization").append("svg")
+      .style("margin-left", yAxisWidth)
+      .attr("width", ((boxPlotMargin.left + boxPlotWidth + boxPlotMargin.right) * 30))
+      .attr("height", 60);
+
+
+
+
+  // Create x-axis scale (based on plot size)
+  var xAxisScale = d3.scale.linear()
+      .domain([1, 30])
+      .range([0, ((boxPlotMargin.left + boxPlotWidth + boxPlotMargin.right - 1.3) * 30)]);
+
+  // Create x-axis
+  var xAxis = d3.svg.axis()
+                     .scale(xAxisScale)
+                     .ticks(30)
+                     .tickFormat(function(d) { return "Sig " + (d); })
+                     .orient("bottom");
+
+
+  // Call xAxis, append as SVG, rotate labels to be vertical
+  var xAxisGroup = xAxisContainer.append("g")
+                                .call(xAxis)
+                                .selectAll("text")
+                                   .attr("y", 0)
+                                   .attr("x", boxPlotMargin.left + (boxPlotWidth/2))
+                                   .attr("dx", "-1.4em")
+                                   .attr("dy", "1.5em")
+                                   .attr("transform", "rotate(-90)" )
+                                   .style("text-anchor", "end");
+
+
+
+
+  // Remove axis line
+  d3.select("path").remove();
+
+  // Highlight specific signatures
+  // d3.select(xAxisGroup[0][4]).attr("stroke", "blue");
+}
+
+function createBoxPlots(data) {
+
+  boxPlotAxisY();
 
   var boxContainer = d3.select("#visualization")
     .append("svg")
@@ -135,67 +201,10 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
         boxContainer.selectAll(".box-text").remove();
       });
 
+  boxPlotAxisX();
 
-
-  // Create x-axis container
-  var xAxisContainer = d3.select("#visualization").append("svg")
-      .style("margin-left", yAxisWidth)
-      .attr("width", ((boxPlotMargin.left + boxPlotWidth + boxPlotMargin.right) * 30))
-      .attr("height", 60);
-
-
-
-
-  // Create x-axis scale (based on plot size)
-  var xAxisScale = d3.scale.linear()
-      .domain([1, 30])
-      .range([0, ((boxPlotMargin.left + boxPlotWidth + boxPlotMargin.right - 1.3) * 30)]);
-
-  // Create x-axis
-  var xAxis = d3.svg.axis()
-                     .scale(xAxisScale)
-                     .ticks(30)
-                     .tickFormat(function(d) { return "Sig " + (d); })
-                     .orient("bottom");
-
-
-  // Call xAxis, append as SVG, rotate labels to be vertical
-  var xAxisGroup = xAxisContainer.append("g")
-                                .call(xAxis)
-                                .selectAll("text")
-                                   .attr("y", 0)
-                                   .attr("x", boxPlotMargin.left + (boxPlotWidth/2))
-                                   .attr("dx", "-1.4em")
-                                   .attr("dy", "1.5em")
-                                   .attr("transform", "rotate(-90)" )
-                                   .style("text-anchor", "end");
-
-
-
-
-  // Remove axis line
-  d3.select("path").remove();
-
-  // Highlight specific signatures
-  // d3.select(xAxisGroup[0][4]).attr("stroke", "blue");
-
-
-});
-
-
-// Returns a function to compute the interquartile range.
-function iqr(k) {
-  return function(d, i) {
-    var q1 = d.quartiles[0],
-        q3 = d.quartiles[2],
-        iqr = (q3 - q1) * k,
-        i = -1,
-        j = d.length;
-    while (d[++i] < q1 - iqr);
-    while (d[--j] > q3 + iqr);
-    return [i, j];
-  };
 }
+
 
 var jitterCheckbox = document.getElementById('switch');
 
@@ -209,7 +218,7 @@ jitterCheckbox.addEventListener('change', function() {
 
 function addJitterPlots() {
   var width = boxPlotWidth + boxPlotMargin.left,
-    height=boxPlotHeight + boxPlotMargin.top;
+    height = boxPlotHeight + boxPlotMargin.top;
 
   var scatterYScale = d3.scale.linear().range([boxPlotHeight, 0]),
     scatterYMap = function(d) { return scatterYScale(d) + boxPlotMargin.top;};
