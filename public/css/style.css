@@ -35,7 +35,6 @@ p.citation, p.figure_label {
 #options {
   margin-bottom: 20px;
   padding-left: 30px;
-  width: 100%;
   float: left;
   display: block;
 }
@@ -87,4 +86,17 @@ label[for="switch"]:active:after {
   float: left;
   margin-left: 5px;
   margin-top: 3px;
+}
+
+.clearfix:after {
+  visibility: hidden;
+  display: block;
+  font-size: 0;
+  content: " ";
+  clear: both;
+  height: 0;
+}
+
+.box-text {
+  font-family: Verdana;
 }

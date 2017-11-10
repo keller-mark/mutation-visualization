@@ -7,7 +7,8 @@ var yAxisWidth = 100;
 var chart = d3.box()
     .whiskers(iqr(1.5))
     .width(boxPlotWidth)
-    .height(boxPlotHeight);
+    .height(boxPlotHeight)
+    .domain([0,0.85]);
 
 
 
@@ -29,7 +30,6 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
 
   });
 
-  chart.domain([0, 1]);
 
   // Create y-axis container
   var yAxisContainer = d3.select("#visualization").append("svg")
@@ -72,16 +72,70 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
   // Remove axis line
   d3.select("path").remove();
 
+  var boxContainer = d3.select("#visualization")
+    .append("svg")
+      .attr("height", boxPlotHeight + boxPlotMargin.top + boxPlotMargin.bottom)
+      .attr("width", 1200)
+    .append("g").attr("class", "box-container");
+
   // Create box plots
-  var svg = d3.select("#visualization").append("g").selectAll("svg")
+  boxContainer.selectAll("svg")
       .data(data)
     .enter().append("svg")
       .attr("class", "box")
       .attr("width", boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)
       .attr("height", boxPlotHeight + boxPlotMargin.bottom + boxPlotMargin.top)
+      .attr("x", function(d, i) { return ((boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right) * i)})
+      .attr("y", 0)
     .append("g")
       .attr("transform", "translate(" + boxPlotMargin.left + "," + boxPlotMargin.top + ")")
-      .call(chart);
+      .call(chart)
+      .on('mouseover', function(d, index) {
+        var d = d.map(Number).sort(d3.ascending);
+        console.log(index);
+        var fontSize = 12;
+        var thisBox = d3.box(d);
+        var quartiles = (thisBox.quartiles())(d);
+        console.log(quartiles);
+        var textContainer = boxContainer.append("svg").attr("class", "box-text");
+
+        var whiskerIndices = (thisBox.whiskers())(d);
+        for(var wIndex = 0; wIndex < whiskerIndices.length; wIndex++) {
+          var currentWhisker = d[whiskerIndices[wIndex]];
+          textContainer.append("circle")
+              .attr("fill", "blue")
+              .attr("r", 3+fontSize+3)
+              .attr("cx", boxPlotMargin.left + (3+fontSize+3)/2 + (index * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)))
+              .attr("cy", boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentWhisker) );
+          textContainer.append("text")
+              .text(currentWhisker.toFixed(2))
+              .attr("font-size", "" + fontSize + "px")
+              .attr("fill", "black")
+              .attr("x", -4 + boxPlotMargin.left + (index * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)))
+              .attr("y", boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentWhisker) + 4);
+        }
+
+        for(var qIndex = 0; qIndex < quartiles.length; qIndex++) {
+          var currentQuartile = quartiles[qIndex];
+          textContainer.append("circle")
+              .attr("fill", "#999")
+              .attr("r", 3+fontSize+3)
+              .attr("cx", boxPlotMargin.left + (3+fontSize+3)/2 + (index * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)))
+              .attr("cy", boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentQuartile) );
+          textContainer.append("text")
+              .text(currentQuartile.toFixed(2))
+              .attr("font-size", "" + fontSize + "px")
+              .attr("fill", "black")
+              .attr("x", -4 + boxPlotMargin.left + (index * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)))
+              .attr("y", boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentQuartile) + 4);
+        }
+
+      })
+      .on("mouseleave", function(d, index) {
+        boxContainer.selectAll(".box-text").remove();
+      });
+
+
 
   // Create x-axis container
   var xAxisContainer = d3.select("#visualization").append("svg")
