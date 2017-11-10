@@ -141,7 +141,7 @@ function createBoxPlots(data) {
   var boxContainer = d3.select("#visualization")
     .append("svg")
       .attr("height", boxPlotHeight + boxPlotMargin.top + boxPlotMargin.bottom)
-      .attr("width", 1200)
+      .attr("width", 1260)
     .append("g").attr("class", "box-container");
 
   // Create box plots
@@ -155,50 +155,52 @@ function createBoxPlots(data) {
       .attr("y", 0)
     .append("g")
       .attr("transform", "translate(" + boxPlotMargin.left + "," + boxPlotMargin.top + ")")
-      .call(chart)
+      .call(chart) // Create each plot using d3.box
       .on('mouseover', function(d, index) {
-        var d = d.map(Number).sort(d3.ascending);
-        console.log(index);
-        var fontSize = 12;
+        // Show "points of interest" toolips on mouseover of box plot (min, max, quartiles)
         var thisBox = d3.box(d);
-        var quartiles = (thisBox.quartiles())(d);
-        console.log(quartiles);
+
+        // Remove existing tooltips
+        boxContainer.selectAll(".box-text").remove();
+
+        // Sort d
+        var d = d.map(Number).sort(d3.ascending);
+
+        var pointsOfInterest = (thisBox.quartiles())(d);
+        var whiskerIndices = (thisBox.whiskers())(d);
+        pointsOfInterest.unshift(d[whiskerIndices[0]]);
+        pointsOfInterest.push(d[whiskerIndices[1]]);
+
+        var fontSize = 12;
+        var rectHeight = (fontSize+6);
+
         var textContainer = boxContainer.append("svg").attr("class", "box-text");
 
-        var whiskerIndices = (thisBox.whiskers())(d);
-        for(var wIndex = 0; wIndex < whiskerIndices.length; wIndex++) {
-          var currentWhisker = d[whiskerIndices[wIndex]];
-          textContainer.append("circle")
-              .attr("fill", "#999")
-              .attr("r", 3+fontSize+3)
-              .attr("cx", boxPlotMargin.left + (3+fontSize+3)/2 + (index * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)))
-              .attr("cy", boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentWhisker) );
+        for(var poiIndex = 0; poiIndex < pointsOfInterest.length; poiIndex++) {
+          var currentPoi = pointsOfInterest[poiIndex];
+
+          var rectX = ((index+1) * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right));
+          var rectY =  -(rectHeight)/2 + boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentPoi);
+
+          textContainer.append("rect")
+              .attr("fill", "#555")
+              .attr("width", (fontSize*3))
+              .attr("height", rectHeight)
+              .attr("x", rectX)
+              .attr("y", rectY);
+
+          textContainer.append("polygon")
+            .attr("fill", "#555")
+            .attr("points", "" + (rectX - (rectHeight/2) + 1) + "," + (rectY + (rectHeight)/2) + " " + rectX + "," + rectY + " " + rectX + "," + (rectY+rectHeight));
+
           textContainer.append("text")
-              .text(currentWhisker.toFixed(2))
+              .text(currentPoi.toFixed(2))
               .attr("font-size", "" + fontSize + "px")
-              .attr("fill", "black")
-              .attr("x", -4 + boxPlotMargin.left + (index * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)))
-              .attr("y", boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentWhisker) + 4);
+              .attr("fill", "#fff")
+              .attr("x", 4 + rectX)
+              .attr("y", rectY + fontSize+1);
         }
 
-        for(var qIndex = 0; qIndex < quartiles.length; qIndex++) {
-          var currentQuartile = quartiles[qIndex];
-          textContainer.append("circle")
-              .attr("fill", "#999")
-              .attr("r", 3+fontSize+3)
-              .attr("cx", boxPlotMargin.left + (3+fontSize+3)/2 + (index * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)))
-              .attr("cy", boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentQuartile) );
-          textContainer.append("text")
-              .text(currentQuartile.toFixed(2))
-              .attr("font-size", "" + fontSize + "px")
-              .attr("fill", "black")
-              .attr("x", -4 + boxPlotMargin.left + (index * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)))
-              .attr("y", boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentQuartile) + 4);
-        }
-
-      })
-      .on("mouseleave", function(d, index) {
-        boxContainer.selectAll(".box-text").remove();
       });
 
   boxPlotAxisX();
@@ -217,11 +219,10 @@ jitterCheckbox.addEventListener('change', function() {
 });
 
 function addJitterPlots() {
-  var width = boxPlotWidth + boxPlotMargin.left,
-    height = boxPlotHeight + boxPlotMargin.top;
-
   var scatterYScale = d3.scale.linear().range([boxPlotHeight, 0]),
     scatterYMap = function(d) { return scatterYScale(d) + boxPlotMargin.top;};
+
+  d3.select("#visualization").selectAll(".outlier").attr("display", "none");
 
   d3.select("#visualization").selectAll(".box").each(function(d, i) {
     var g = d3.select(this);
@@ -230,14 +231,16 @@ function addJitterPlots() {
     .enter().append("circle")
       .attr("class", "dot")
       .attr("r", 3.5)
-      .attr("cx", function(d) { return Math.random()*(width/2) + (width/4) + (boxPlotMargin.left/2); })
+      .attr("cx", function(d) { return Math.random()*((boxPlotWidth + boxPlotMargin.left)/2) + ((boxPlotWidth + boxPlotMargin.left)/4) + (boxPlotMargin.left/2); })
       .attr("cy", scatterYMap)
-      .style("fill", "#000000")
+      .style("fill", "#000")
       .style("opacity", "0.2");
   });
 }
 
 function removeJitterPlots() {
+  d3.select("#visualization").selectAll(".outlier").attr("display", "normal");
+
   d3.select("#visualization").selectAll(".box").each(function(d, i) {
     var g = d3.select(this);
     g.selectAll(".dot").remove();
