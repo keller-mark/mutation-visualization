@@ -22,6 +22,13 @@ d3.box = function() {
           min = d[0],
           max = d[n - 1];
 
+      g.append("rect")
+        .attr("class", "box-bg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("x", 0)
+        .attr("y", 0);
+
       // Compute quartiles. Must return exactly 3 elements.
       var quartileData = d.quartiles = quartiles(d);
 
@@ -237,7 +244,7 @@ d3.box = function() {
       g.selectAll("text").attr("display", "none");
 
       /*
-      
+
       g.on('mouseover', function(d){
         g.selectAll("text").attr("display", "normal");
           var plotText = g.selectAll("text").each(function(d, i) {

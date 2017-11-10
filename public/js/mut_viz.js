@@ -1,4 +1,4 @@
-var boxPlotMargin = {top: 10, right: 10, bottom: 20, left: 10},
+var boxPlotMargin = {top: 20, right: 10, bottom: 20, left: 10},
     boxPlotWidth = 40 - boxPlotMargin.left - boxPlotMargin.right,
     boxPlotHeight = 400 - boxPlotMargin.top - boxPlotMargin.bottom;
 
@@ -8,7 +8,7 @@ var chart = d3.box()
     .whiskers(iqr(1.5))
     .width(boxPlotWidth)
     .height(boxPlotHeight)
-    .domain([0,0.85]);
+    .domain([0,1]);
 
 
 
@@ -41,7 +41,7 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
 
   // Create y-axis scale (based on plot size)
   var yAxisScale = d3.scale.linear()
-      .domain([0, 0.9])
+      .domain([0, 1])
       .range([boxPlotHeight, 0]);
 
   // Create y-axis
@@ -103,7 +103,7 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
         for(var wIndex = 0; wIndex < whiskerIndices.length; wIndex++) {
           var currentWhisker = d[whiskerIndices[wIndex]];
           textContainer.append("circle")
-              .attr("fill", "blue")
+              .attr("fill", "#999")
               .attr("r", 3+fontSize+3)
               .attr("cx", boxPlotMargin.left + (3+fontSize+3)/2 + (index * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)))
               .attr("cy", boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentWhisker) );

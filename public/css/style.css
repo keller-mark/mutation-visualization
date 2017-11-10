@@ -7,11 +7,15 @@ body {
 }
 
 .box line,
-.box rect,
+.box rect.box,
 .box circle {
   fill: red;
   stroke: #000;
   stroke-width: 1.5px;
+}
+
+.box rect.box-bg {
+  fill: transparent;
 }
 
 .box text {
