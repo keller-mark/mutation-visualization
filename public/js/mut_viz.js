@@ -10,10 +10,10 @@ var chart = d3.box()
     .height(boxPlotHeight)
     .domain([0,1]);
 
+var data = [];
+
 d3.csv("data/signature_distributions_t.csv", function(error, csv) {
   if (error) throw error;
-
-  var data = [];
 
   csv.forEach(function(row) {
     var specimens = []
@@ -93,6 +93,7 @@ function boxPlotAxisY() {
 function boxPlotAxisX() {
   // Create x-axis container
   var xAxisContainer = d3.select("#visualization").append("svg")
+      .attr("class", "x-axis")
       .style("margin-left", yAxisWidth)
       .attr("width", ((boxPlotMargin.left + boxPlotWidth + boxPlotMargin.right) * 30))
       .attr("height", 60);
@@ -207,6 +208,10 @@ function createBoxPlots(data) {
 
 }
 
+function showSigExposures() {
+
+}
+
 
 var jitterCheckbox = document.getElementById('switch');
 
@@ -224,7 +229,7 @@ function addJitterPlots() {
 
   d3.select("#visualization").selectAll(".outlier").attr("display", "none");
 
-  d3.select("#visualization").selectAll(".box").each(function(d, i) {
+  d3.select("#visualization").selectAll("svg.box").each(function(d, i) {
     var g = d3.select(this);
     g.selectAll(".jitter-dot")
       .data(d)
@@ -236,20 +241,31 @@ function addJitterPlots() {
       .style("stroke-width", 0)
       .style("fill", "#000")
       .style("opacity", "0.2")
-      .on("mouseover", function(d, i) {
-        console.log(d);
-        var currentCircle = d3.select(this);
-        currentCircle
-          .attr("r", 6)
-          .style("fill", "blue")
-          .style("opacity", "1");
-      })
-      .on("mouseleave", function() {
-        var currentCircle = d3.select(this);
-        currentCircle
-          .attr("r", 3.5)
-          .style("fill", "#000")
-          .style("opacity", "0.2");
+      .on("mouseover", function(d, jitterDotIndex) {
+        var boxes = d3.select("#visualization").selectAll("svg.box");
+        for(var boxIndex = 0; boxIndex < boxes[0].length; boxIndex++) {
+            var currentBox = d3.select(boxes[0][boxIndex]);
+            var jitterDots = currentBox.selectAll(".jitter-dot");
+            var patientJitterDot = d3.select(jitterDots[0][jitterDotIndex]);
+
+            var overlayPatientJitterDot = currentBox.append("circle")
+              .attr("class", "patient-jitter-dot")
+              .attr("r", 6)
+              .attr("cx", patientJitterDot.attr("cx"))
+              .attr("cy", patientJitterDot.attr("cy"))
+              .style("stroke-width", 1.5)
+              .style("stroke", "#fff")
+              .style("fill", "blue")
+              .style("opacity", "1");
+
+              if(i == boxIndex) {
+                overlayPatientJitterDot.on("mouseleave", function() {
+                  d3.select("#visualization").selectAll("svg.box > .patient-jitter-dot").remove();
+                });
+              }
+
+
+        }
       });
   });
 }
