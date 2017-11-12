@@ -4,6 +4,8 @@ var boxPlotMargin = {top: 20, right: 10, bottom: 20, left: 10},
 
 var yAxisWidth = 100;
 
+
+
 var chart = d3.box()
   .whiskers(iqr(1.5))
   .width(boxPlotWidth)
@@ -15,7 +17,8 @@ var vizState = {
   "data": [],
   "exposureThreshold": 0.00,
   "jitterPlots": false,
-  "jitterRands": []
+  "jitterRands": [],
+  "boxContainerWidth": 1260
 };
 
 // Read the signature distribution data into the data array, then create box plots
@@ -34,11 +37,6 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
       }
     }
     data.push(specimens);
-  });
-
-  // Initialize array of random x values for jitter points
-  vizState["jitterRands"] = Array.apply(null, {length: data[0].length}).map(Function.call, function() {
-    return Math.random()*((boxPlotWidth + boxPlotMargin.left)/2) + ((boxPlotWidth + boxPlotMargin.left)/4) + (boxPlotMargin.left/2);
   });
 
   createBoxPlots();
@@ -91,7 +89,7 @@ function boxPlotAxisY() {
 
   yAxisContainer.append("text")
     .attr("text-anchor", "end")
-    .attr("x", -3*boxPlotWidth)
+    .attr("x", -40)
     .attr("y", 50)
     .attr("dy", "0.25em")
     .attr("transform", "rotate(-90)")
@@ -107,7 +105,7 @@ function boxPlotAxisX() {
     .attr("class", "x-axis")
     .style("margin-left", yAxisWidth)
     .attr("width", ((boxPlotMargin.left + boxPlotWidth + boxPlotMargin.right) * 30))
-    .attr("height", 60);
+    .attr("height", 80);
 
   // Create x-axis scale (based on plot size)
   var xAxisScale = d3.scale.linear()
@@ -126,17 +124,55 @@ function boxPlotAxisX() {
     .call(xAxis)
     .selectAll("text")
       .attr("y", 0)
-      .attr("x", boxPlotMargin.left + (boxPlotWidth/2))
+      .attr("x", 22)
       .attr("dx", "-1.4em")
       .attr("dy", "1.5em")
       .attr("transform", "rotate(-90)" )
       .style("text-anchor", "end");
 
+  xAxisContainer.selectAll(".tick").each(function(d, i) {
+    var sigToggleContainer = d3.select(this).append("g")
+      .attr("class", "sig-toggle")
+      .on("mouseover", function() {
+        sigToggleContainer.select("circle").attr("fill", "#888");
+        sigToggleContainer.select("text").attr("fill", "#fff");
+      })
+      .on("mouseleave", function() {
+        sigToggleContainer.select("circle").attr("fill", "#ddd");
+        sigToggleContainer.select("text").attr("fill", "#000");
+      })
+      .on("click", function() {
+        var boxPlot = d3.select("#visualization").select("svg.box:nth-child(" + (i + 1) + ")");
+        var boxPlotHidden = (boxPlot.attr("display") == "none");
+        if(boxPlotHidden) {
+          boxPlot.attr("display", "normal");
+          sigToggleContainer.select("text").text("-");
+        } else {
+          boxPlot.attr("display", "none");
+          sigToggleContainer.select("text").text("+");
+        }
+      });
+
+    sigToggleContainer.append("circle")
+      .attr("r", 10)
+      .attr("cx", 18)
+      .attr("cy", 64)
+      .attr("fill", "#ddd");
+
+    sigToggleContainer.append("text")
+          .text("-")
+          .attr("font-size", "20px")
+          .attr("fill", "#000")
+          .attr("x", 18)
+          .attr("y", 70)
+          .attr("text-anchor", "middle");
+  });
+
   // Remove axis line
   d3.select(".x-axis path").remove();
 
   // Highlight specific signatures
-  d3.select(xAxisGroup[0][4]).attr("stroke", "blue");
+  // d3.select(xAxisGroup[0][4]).attr("stroke", "blue");
 }
 
 function removePlotTooltips() {
@@ -229,49 +265,52 @@ function redrawBoxPlots() {
   }
 }
 
+function removeBoxPlotsAndAxes() {
+  removeBoxPlots();
+  d3.select("#visualization").select(".x-axis").remove();
+  d3.select("#visualization").select(".y-axis").remove();
+  d3.select("#visualization").select("svg").remove();
+}
+
 function createBoxPlots() {
   var data = vizState["data"];
 
   boxPlotAxisY();
 
-  var boxContainer = d3.select("#visualization")
+  var vizDiv = document.getElementById("visualization");
+  var vizWidth = vizDiv.clientWidth - yAxisWidth;
+
+  boxPlotWidth = (vizWidth - (31* (boxPlotMargin.left + boxPlotMargin.right))) / 31;
+
+  chart = d3.box()
+    .whiskers(iqr(1.5))
+    .width(boxPlotWidth)
+    .height(boxPlotHeight)
+    .domain([0,1]);
+
+  // Initialize array of random x values for jitter points
+  vizState["jitterRands"] = Array.apply(null, {length: data[0].length}).map(Function.call, function() {
+    return Math.random()*((boxPlotWidth + boxPlotMargin.left)/2) + ((boxPlotWidth + boxPlotMargin.left)/4) + (boxPlotMargin.left/2);
+  });
+
+  var boxContainer = d3.select(vizDiv)
     .append("svg")
       .attr("height", boxPlotHeight + boxPlotMargin.top + boxPlotMargin.bottom)
-      .attr("width", 1260)
+      .attr("width", vizWidth)
     .append("g").attr("id", "box-container");
 
-    var data = vizState["data"];
-    var exposureThreshold = vizState["exposureThreshold"];
-
-    var boxContainer = d3.select("#visualization").select("#box-container");
-
-    // Filter data based on threshold, then call chart to create each plot
-    boxContainer.selectAll("svg")
-        .data(data.map(function(sigData) {
-          return sigData.filter(function(sigDataPoint) {
-            return sigDataPoint >= exposureThreshold;
-          });
-        }))
-      .enter().append("svg")
-        .attr("class", "box")
-        .attr("width", boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)
-        .attr("height", boxPlotHeight + boxPlotMargin.bottom + boxPlotMargin.top)
-        .attr("x", function(d, i) { return ((boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right) * i)})
-        .attr("y", 0)
-      .append("g")
-        .attr("transform", "translate(" + boxPlotMargin.left + "," + boxPlotMargin.top + ")")
-        .call(chart) // Create each plot using d3.box
-        .on('mouseover', showPlotTooltips);
-
-    // Set mouseleave for visualization to clear all tooltips
-    d3.select("#visualization")
-      .on("mouseleave", function() {
-        // Remove existing tooltips
-        d3.select(this).selectAll(".box-text").remove();
-      });
+  redrawBoxPlots();
 
   boxPlotAxisX();
+
 }
+
+function redrawVisualization() {
+  removeBoxPlotsAndAxes();
+  createBoxPlots();
+}
+
+window.addEventListener("resize", redrawVisualization);
 
 function removeBoxPlots() {
   d3.select("#visualization").selectAll("svg.box").remove();
@@ -328,7 +367,8 @@ function addJitterPlots() {
             var patientJitterDotText = currentBox.append("text")
               .text(data[boxIndex][jitterDotIndex].toFixed(2))
               .attr("class", "patient-jitter-text")
-              .attr("x", 8)
+              .attr("text-anchor", "middle")
+              .attr("x", boxPlotMargin.left + (boxPlotWidth/2))
               .attr("y", boxPlotHeight + boxPlotMargin.top + 18)
               .attr("font-size", "12px")
               .attr("fill", "blue");

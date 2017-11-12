@@ -1,5 +1,6 @@
 body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  
 }
 /* Box Plots */
 .box {
@@ -54,7 +55,7 @@ label[for="switch"] {
 	cursor: pointer;
 	width: 50px;
 	height: 25px;
-	background: grey;
+	background: #888888;
 	border-radius: 25px;
 	position: relative;
   display: inline;
@@ -147,4 +148,8 @@ input[type=range]::-moz-range-thumb {
 
 .box-text {
   font-family: Verdana;
+}
+
+.sig-toggle {
+  cursor: pointer;
 }
