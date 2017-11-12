@@ -148,7 +148,3 @@ input[type=range]::-moz-range-thumb {
 .box-text {
   font-family: Verdana;
 }
-
-.jitter-dot, .patient-jitter-dot {
-  cursor: pointer;
-}

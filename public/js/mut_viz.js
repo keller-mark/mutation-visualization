@@ -10,9 +10,15 @@ var chart = d3.box()
     .height(boxPlotHeight)
     .domain([0,1]);
 
-var data = [];
+var vizState = {
+  "data": [],
+  "exposureThreshold": 0.00,
+  "jitterPlots": false
+};
 
 d3.csv("data/signature_distributions_t.csv", function(error, csv) {
+  var data = vizState["data"];
+
   if (error) throw error;
 
   csv.forEach(function(row) {
@@ -28,7 +34,7 @@ d3.csv("data/signature_distributions_t.csv", function(error, csv) {
 
   });
 
-  createBoxPlots(data);
+  createBoxPlots();
 
 });
 
@@ -135,8 +141,59 @@ function boxPlotAxisX() {
   // d3.select(xAxisGroup[0][4]).attr("stroke", "blue");
 }
 
-function redrawBoxPlots(data, threshold) {
+function showPlotTooltips(d, index) {
+  // Show "points of interest" toolips on mouseover of box plot (min, max, quartiles)
+
+  var boxContainer = d3.select("#visualization").select("#box-container");
+  var thisBox = d3.box(d);
+
+  // Remove existing tooltips
+  boxContainer.selectAll(".box-text").remove();
+
+  // Sort d
+  var d = d.map(Number).sort(d3.ascending);
+
+  var pointsOfInterest = (thisBox.quartiles())(d);
+  var whiskerIndices = (thisBox.whiskers())(d);
+  pointsOfInterest.unshift(d[whiskerIndices[0]]);
+  pointsOfInterest.push(d[whiskerIndices[1]]);
+
+  var fontSize = 12;
+  var rectHeight = (fontSize+6);
+
+  var textContainer = boxContainer.append("svg").attr("class", "box-text");
+
+  for(var poiIndex = 0; poiIndex < pointsOfInterest.length; poiIndex++) {
+    var currentPoi = pointsOfInterest[poiIndex];
+
+    var rectX = ((index+1) * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right));
+    var rectY =  -(rectHeight)/2 + boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentPoi);
+
+    textContainer.append("rect")
+        .attr("fill", "#555")
+        .attr("width", (fontSize*3))
+        .attr("height", rectHeight)
+        .attr("x", rectX)
+        .attr("y", rectY);
+
+    textContainer.append("polygon")
+      .attr("fill", "#555")
+      .attr("points", "" + (rectX - (rectHeight/2) + 1) + "," + (rectY + (rectHeight)/2) + " " + rectX + "," + rectY + " " + rectX + "," + (rectY+rectHeight));
+
+    textContainer.append("text")
+        .text(currentPoi.toFixed(2))
+        .attr("font-size", "" + fontSize + "px")
+        .attr("fill", "#fff")
+        .attr("x", 4 + rectX)
+        .attr("y", rectY + fontSize+1);
+  }
+}
+
+function redrawBoxPlots() {
   removeBoxPlots();
+
+  var data = vizState["data"];
+  var exposureThreshold = vizState["exposureThreshold"];
 
   var boxContainer = d3.select("#visualization").select("#box-container");
 
@@ -144,7 +201,7 @@ function redrawBoxPlots(data, threshold) {
   boxContainer.selectAll("svg")
       .data(data.map(function(sigData) {
         return sigData.filter(function(sigDataPoint) {
-          return sigDataPoint >= threshold;
+          return sigDataPoint >= exposureThreshold;
         });
       }))
     .enter().append("svg")
@@ -156,52 +213,7 @@ function redrawBoxPlots(data, threshold) {
     .append("g")
       .attr("transform", "translate(" + boxPlotMargin.left + "," + boxPlotMargin.top + ")")
       .call(chart) // Create each plot using d3.box
-      .on('mouseover', function(d, index) {
-        // Show "points of interest" toolips on mouseover of box plot (min, max, quartiles)
-        var thisBox = d3.box(d);
-
-        // Remove existing tooltips
-        boxContainer.selectAll(".box-text").remove();
-
-        // Sort d
-        var d = d.map(Number).sort(d3.ascending);
-
-        var pointsOfInterest = (thisBox.quartiles())(d);
-        var whiskerIndices = (thisBox.whiskers())(d);
-        pointsOfInterest.unshift(d[whiskerIndices[0]]);
-        pointsOfInterest.push(d[whiskerIndices[1]]);
-
-        var fontSize = 12;
-        var rectHeight = (fontSize+6);
-
-        var textContainer = boxContainer.append("svg").attr("class", "box-text");
-
-        for(var poiIndex = 0; poiIndex < pointsOfInterest.length; poiIndex++) {
-          var currentPoi = pointsOfInterest[poiIndex];
-
-          var rectX = ((index+1) * (boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right));
-          var rectY =  -(rectHeight)/2 + boxPlotMargin.top + boxPlotHeight - ((boxPlotHeight) * currentPoi);
-
-          textContainer.append("rect")
-              .attr("fill", "#555")
-              .attr("width", (fontSize*3))
-              .attr("height", rectHeight)
-              .attr("x", rectX)
-              .attr("y", rectY);
-
-          textContainer.append("polygon")
-            .attr("fill", "#555")
-            .attr("points", "" + (rectX - (rectHeight/2) + 1) + "," + (rectY + (rectHeight)/2) + " " + rectX + "," + rectY + " " + rectX + "," + (rectY+rectHeight));
-
-          textContainer.append("text")
-              .text(currentPoi.toFixed(2))
-              .attr("font-size", "" + fontSize + "px")
-              .attr("fill", "#fff")
-              .attr("x", 4 + rectX)
-              .attr("y", rectY + fontSize+1);
-        }
-
-      });
+      .on('mouseover', showPlotTooltips);
 
   d3.select("#visualization")
     .on("mouseleave", function() {
@@ -209,10 +221,14 @@ function redrawBoxPlots(data, threshold) {
       d3.select(this).selectAll(".box-text").remove();
     });
 
-  checkJitterStatus();
+  if(vizState["jitterPlots"]) {
+    addJitterPlots();
+  }
 }
 
-function createBoxPlots(data) {
+function createBoxPlots() {
+
+  var data = vizState["data"];
 
   boxPlotAxisY();
 
@@ -222,7 +238,7 @@ function createBoxPlots(data) {
       .attr("width", 1260)
     .append("g").attr("id", "box-container");
 
-  redrawBoxPlots(data, 0.00);
+  redrawBoxPlots();
 
   boxPlotAxisX();
 
@@ -244,6 +260,8 @@ jitterCheckbox.addEventListener('change', function() {
 });
 
 function addJitterPlots() {
+  var data = vizState["data"];
+  var exposureThreshold = vizState["exposureThreshold"];
   var scatterYScale = d3.scale.linear().range([boxPlotHeight, 0]),
     scatterYMap = function(d) { return scatterYScale(d) + boxPlotMargin.top;};
 
@@ -260,8 +278,16 @@ function addJitterPlots() {
       .attr("cy", scatterYMap)
       .style("stroke-width", 0)
       .style("fill", "#000")
-      .style("opacity", "0.2")
+      .style("opacity", function(d) {
+        if(d >= exposureThreshold) {
+          return 0.2
+        }
+        return 0;
+      })
       .on("mouseover", function(d, jitterDotIndex) {
+        if(d < exposureThreshold) {
+          return;
+        }
         var boxes = d3.select("#visualization").selectAll("svg.box");
         for(var boxIndex = 0; boxIndex < boxes[0].length; boxIndex++) {
             var currentBox = d3.select(boxes[0][boxIndex]);
@@ -288,6 +314,8 @@ function addJitterPlots() {
         }
       });
   });
+
+  vizState["jitterPlots"] = true;
 }
 
 function removeJitterPlots() {
@@ -297,18 +325,15 @@ function removeJitterPlots() {
     var g = d3.select(this);
     g.selectAll(".jitter-dot").remove();
   });
-}
 
-function checkJitterStatus() {
-  var jitterCheckbox = document.getElementById('switch');
-  if(jitterCheckbox.checked) {
-    addJitterPlots();
-  }
+  vizState["jitterPlots"] = false;
 }
 
 function updateExposureThreshold() {
   var exposureThreshold = (document.getElementById("exposure-range").value / 100);
+  vizState["exposureThreshold"] = exposureThreshold;
+
   var valueLabel = document.getElementById("exposure-range-value");
   valueLabel.innerHTML = exposureThreshold.toFixed(2);
-  redrawBoxPlots(data, exposureThreshold);
+  redrawBoxPlots();
 }
