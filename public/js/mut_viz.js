@@ -4,8 +4,6 @@ var boxPlotMargin = {top: 20, right: 10, bottom: 20, left: 10},
 
 var yAxisWidth = 100;
 
-
-
 var chart = d3.box()
   .whiskers(iqr(1.5))
   .width(boxPlotWidth)
@@ -20,6 +18,17 @@ var vizState = {
   "jitterRands": [],
   "boxContainerWidth": 1260
 };
+
+window.addEventListener("resize", redrawVisualization);
+
+var jitterCheckbox = document.getElementById('switch');
+jitterCheckbox.addEventListener('change', function() {
+    if(this.checked) {
+      addJitterPlots();
+    } else {
+      removeJitterPlots();
+    }
+});
 
 // Read the signature distribution data into the data array, then create box plots
 d3.csv("data/signature_distributions_t.csv", function(error, csv) {
@@ -55,7 +64,7 @@ function iqr(k) {
     return [i, j];
   };
 }
-
+// Draw Y Axis
 function boxPlotAxisY() {
   // Create y-axis container
   var yAxisContainer = d3.select("#visualization").append("svg")
@@ -99,6 +108,7 @@ function boxPlotAxisY() {
   d3.select(".y-axis path").remove();
 }
 
+// Draw X Axis
 function boxPlotAxisX() {
   // Create x-axis container
   var xAxisContainer = d3.select("#visualization").append("svg")
@@ -130,7 +140,9 @@ function boxPlotAxisX() {
       .attr("transform", "rotate(-90)" )
       .style("text-anchor", "end");
 
+  // Append +- button to toggle box plots shown below each tick text element
   xAxisContainer.selectAll(".tick").each(function(d, i) {
+    // Create button group, with hover and click events
     var sigToggleContainer = d3.select(this).append("g")
       .attr("class", "sig-toggle")
       .on("mouseover", function() {
@@ -142,6 +154,7 @@ function boxPlotAxisX() {
         sigToggleContainer.select("text").attr("fill", "#000");
       })
       .on("click", function() {
+        // Toggle box plot visibility
         var boxPlot = d3.select("#visualization").select("svg.box:nth-child(" + (i + 1) + ")");
         var boxPlotHidden = (boxPlot.attr("display") == "none");
         if(boxPlotHidden) {
@@ -150,15 +163,18 @@ function boxPlotAxisX() {
         } else {
           boxPlot.attr("display", "none");
           sigToggleContainer.select("text").text("+");
+          // TODO: update other plots to reflect plot removal
         }
-      });
+      })
+      .attr("display", "none");
 
+    // Create button background
     sigToggleContainer.append("circle")
       .attr("r", 10)
       .attr("cx", 18)
       .attr("cy", 64)
       .attr("fill", "#ddd");
-
+    // Add button text
     sigToggleContainer.append("text")
           .text("-")
           .attr("font-size", "20px")
@@ -175,6 +191,7 @@ function boxPlotAxisX() {
   // d3.select(xAxisGroup[0][4]).attr("stroke", "blue");
 }
 
+// Remove all "points of interest" tooltips (from entire chart)
 function removePlotTooltips() {
   var boxContainer = d3.select("#visualization").select("#box-container");
   boxContainer.selectAll(".box-text").remove();
@@ -187,7 +204,7 @@ function showPlotTooltips(d, index) {
 
   var boxContainer = d3.select("#visualization").select("#box-container");
   var thisBox = d3.box(d);
-
+  // Sort d to line up the proper indices with the values calculated in box.js
   var d = d.map(Number).sort(d3.ascending);
 
   var pointsOfInterest = (thisBox.quartiles())(d);
@@ -198,8 +215,10 @@ function showPlotTooltips(d, index) {
   var fontSize = 12;
   var rectHeight = (fontSize+6);
 
+  /* Append to the boxContainer so that the tooltip x-value
+   * can be located outside of the current box plot container */
   var textContainer = boxContainer.append("svg").attr("class", "box-text");
-
+  // For each "point of interest" value, add a tooltip at the proper height
   for(var poiIndex = 0; poiIndex < pointsOfInterest.length; poiIndex++) {
     var currentPoi = pointsOfInterest[poiIndex];
 
@@ -226,6 +245,7 @@ function showPlotTooltips(d, index) {
   }
 }
 
+// Redraw only the box plots, not the axes
 function redrawBoxPlots() {
   removeBoxPlots();
 
@@ -264,14 +284,14 @@ function redrawBoxPlots() {
     addJitterPlots();
   }
 }
-
+// Remove everything
 function removeBoxPlotsAndAxes() {
   removeBoxPlots();
   d3.select("#visualization").select(".x-axis").remove();
   d3.select("#visualization").select(".y-axis").remove();
   d3.select("#visualization").select("svg").remove();
 }
-
+// Create everything
 function createBoxPlots() {
   var data = vizState["data"];
 
@@ -304,29 +324,17 @@ function createBoxPlots() {
   boxPlotAxisX();
 
 }
-
+// Remove and recreate everything
 function redrawVisualization() {
   removeBoxPlotsAndAxes();
   createBoxPlots();
 }
-
-window.addEventListener("resize", redrawVisualization);
-
+// Remove only the box plots
 function removeBoxPlots() {
   d3.select("#visualization").selectAll("svg.box").remove();
 }
 
-
-var jitterCheckbox = document.getElementById('switch');
-
-jitterCheckbox.addEventListener('change', function() {
-    if(this.checked) {
-      addJitterPlots();
-    } else {
-      removeJitterPlots();
-    }
-});
-
+// Add jitter plot points
 function addJitterPlots() {
   var data = vizState["data"];
   var jitterRands = vizState["jitterRands"];
@@ -336,7 +344,9 @@ function addJitterPlots() {
 
   d3.select("#visualization").selectAll(".outlier").attr("display", "none");
 
+  // Iterate over each of the box plots
   d3.select("#visualization").selectAll("svg.box").each(function(d, i) {
+    // Append each patient data point as a circle
     var g = d3.select(this);
     g.selectAll(".jitter-dot")
       .data(data[i])
@@ -348,10 +358,10 @@ function addJitterPlots() {
       .style("stroke-width", 0)
       .style("fill", "#000")
       .style("opacity", function(d) {
-        if(d >= exposureThreshold) {
-          return 0.2
+        if(d < exposureThreshold) {
+          return 0;
         }
-        return 0;
+        return 0.2;
       })
       .on("mouseover", function(d, jitterDotIndex) {
         if(d < exposureThreshold) {
@@ -388,8 +398,6 @@ function addJitterPlots() {
                   removePatientJitterDots();
                 });
               }
-
-
         }
       });
   });
@@ -397,11 +405,13 @@ function addJitterPlots() {
   vizState["jitterPlots"] = true;
 }
 
+// Remove currently-highlighted jitter plot points
 function removePatientJitterDots() {
   d3.select("#visualization").selectAll("svg.box > .patient-jitter-text").remove();
   d3.select("#visualization").selectAll("svg.box > .patient-jitter-dot").remove();
 }
 
+// Remove all jitter plot points
 function removeJitterPlots() {
   d3.select("#visualization").selectAll(".outlier").attr("display", "normal");
 
