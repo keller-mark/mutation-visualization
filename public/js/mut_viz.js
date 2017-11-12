@@ -135,19 +135,18 @@ function boxPlotAxisX() {
   // d3.select(xAxisGroup[0][4]).attr("stroke", "blue");
 }
 
-function createBoxPlots(data) {
+function redrawBoxPlots(data, threshold) {
+  removeBoxPlots();
 
-  boxPlotAxisY();
-
-  var boxContainer = d3.select("#visualization")
-    .append("svg")
-      .attr("height", boxPlotHeight + boxPlotMargin.top + boxPlotMargin.bottom)
-      .attr("width", 1260)
-    .append("g").attr("class", "box-container");
+  var boxContainer = d3.select("#visualization").select("#box-container");
 
   // Create box plots
   boxContainer.selectAll("svg")
-      .data(data)
+      .data(data.map(function(sigData) {
+        return sigData.filter(function(sigDataPoint) {
+          return sigDataPoint >= threshold;
+        });
+      }))
     .enter().append("svg")
       .attr("class", "box")
       .attr("width", boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)
@@ -204,12 +203,33 @@ function createBoxPlots(data) {
 
       });
 
+  d3.select("#visualization")
+    .on("mouseleave", function() {
+      // Remove existing tooltips
+      d3.select(this).selectAll(".box-text").remove();
+    });
+
+  checkJitterStatus();
+}
+
+function createBoxPlots(data) {
+
+  boxPlotAxisY();
+
+  var boxContainer = d3.select("#visualization")
+    .append("svg")
+      .attr("height", boxPlotHeight + boxPlotMargin.top + boxPlotMargin.bottom)
+      .attr("width", 1260)
+    .append("g").attr("id", "box-container");
+
+  redrawBoxPlots(data, 0.00);
+
   boxPlotAxisX();
 
 }
 
-function showSigExposures() {
-
+function removeBoxPlots() {
+  d3.select("#visualization").selectAll("svg.box").remove();
 }
 
 
@@ -232,7 +252,7 @@ function addJitterPlots() {
   d3.select("#visualization").selectAll("svg.box").each(function(d, i) {
     var g = d3.select(this);
     g.selectAll(".jitter-dot")
-      .data(d)
+      .data(data[i])
     .enter().append("circle")
       .attr("class", "jitter-dot")
       .attr("r", 3.5)
@@ -277,4 +297,18 @@ function removeJitterPlots() {
     var g = d3.select(this);
     g.selectAll(".jitter-dot").remove();
   });
+}
+
+function checkJitterStatus() {
+  var jitterCheckbox = document.getElementById('switch');
+  if(jitterCheckbox.checked) {
+    addJitterPlots();
+  }
+}
+
+function updateExposureThreshold() {
+  var exposureThreshold = (document.getElementById("exposure-range").value / 100);
+  var valueLabel = document.getElementById("exposure-range-value");
+  valueLabel.innerHTML = exposureThreshold.toFixed(2);
+  redrawBoxPlots(data, exposureThreshold);
 }
