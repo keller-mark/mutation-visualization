@@ -293,6 +293,7 @@ function removeBoxPlotsAndAxes() {
 }
 // Create everything
 function createBoxPlots() {
+
   var data = vizState["data"];
 
   boxPlotAxisY();
@@ -316,12 +317,42 @@ function createBoxPlots() {
   var boxContainer = d3.select(vizDiv)
     .append("svg")
       .attr("height", boxPlotHeight + boxPlotMargin.top + boxPlotMargin.bottom)
-      .attr("width", vizWidth)
+      .attr("width", vizWidth - (yAxisWidth/2))
     .append("g").attr("id", "box-container");
 
-  redrawBoxPlots();
+    var data = vizState["data"];
+    var exposureThreshold = vizState["exposureThreshold"];
+
+    var boxContainer = d3.select("#visualization").select("#box-container");
+
+    // Filter data based on threshold, then call chart to create each plot
+    boxContainer.selectAll("svg")
+        .data(data.map(function(sigData) {
+          return sigData.filter(function(sigDataPoint) {
+            return sigDataPoint >= exposureThreshold;
+          });
+        }))
+      .enter().append("svg")
+        .attr("class", "box")
+        .attr("width", boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)
+        .attr("height", boxPlotHeight + boxPlotMargin.bottom + boxPlotMargin.top)
+        .attr("x", function(d, i) { return ((boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right) * i)})
+        .attr("y", 0)
+      .append("g")
+        .attr("transform", "translate(" + boxPlotMargin.left + "," + boxPlotMargin.top + ")")
+        .call(chart) // Create each plot using d3.box
+        .on('mouseover', showPlotTooltips);
+
+    // Set mouseleave for visualization to clear all tooltips
+    d3.select("#visualization")
+      .on("mouseleave", function() {
+        // Remove existing tooltips
+        d3.select(this).selectAll(".box-text").remove();
+      });
 
   boxPlotAxisX();
+
+  //signatureClustering(vizWidth);
 
 }
 // Remove and recreate everything
@@ -430,4 +461,40 @@ function updateExposureThreshold() {
   var valueLabel = document.getElementById("exposure-range-value");
   valueLabel.innerHTML = exposureThreshold.toFixed(2);
   redrawBoxPlots();
+}
+
+function signatureClustering(vizWidth) {
+  var data = vizState["data"];
+
+  var colWidth = vizWidth / data.length;
+  var rowHeight = 2;
+
+  d3.select("#visualization-clustering").append("svg")
+      .attr("class", "clustering")
+      .attr("height", rowHeight*data[0].length)
+      .attr("width", colWidth*data.length)
+      .selectAll(".clustering")
+    .data(data)
+    .enter()
+    .append("g")
+    .append("svg")
+      .attr("class", "matrix-column")
+      .attr("x", function(d, i) { return colWidth*i; })
+      .attr("y", 0)
+      .attr("width", colWidth)
+      .attr("height", function(d, i) { return rowHeight*d.length; })
+    .selectAll(".matrix-column")
+    .data(function(d, i) { return d; })
+    .enter()
+    .append("rect")
+      .attr("x", 0)
+      .attr("y", function(d, i) { return i*rowHeight })
+      .attr("width", colWidth)
+      .attr("height", rowHeight)
+      .attr("fill", "blue")
+      .attr("opacity", function(d) { return d })
+      .on("mouseover", function(d, i, j) {
+        d3.selectAll("#visualization-clustering g:nth-child(" + (j + 1) + ") > .matrix-column rect")
+          .classed("matrix-column-highlight", true);
+      });
 }

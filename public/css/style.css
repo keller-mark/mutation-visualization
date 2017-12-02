@@ -1,6 +1,6 @@
 body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  
+
 }
 /* Box Plots */
 .box {
@@ -152,4 +152,8 @@ input[type=range]::-moz-range-thumb {
 
 .sig-toggle {
   cursor: pointer;
+}
+
+.matrix-column-highlight {
+  fill: red;
 }
