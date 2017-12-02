@@ -158,6 +158,6 @@ input[type=range]::-moz-range-thumb {
   fill: red;
 }
 
-.dataset-form {
+#dataset-form {
   padding-left: 10px;
 }

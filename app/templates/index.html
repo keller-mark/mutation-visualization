@@ -9,17 +9,18 @@
     <div class="container">
       <h1>Cancer Mutation Signatures</h1>
 
-      <form class="dataset-form">
+      <form id="dataset-form">
         <label>Select ICGC Project:</label>
         <br>
-        <select name="dataset_id">
+        <select id="dataset-form_select">
           {% for project in icgc_ssm_projects %}
-          <option value="{{ project['id'] }}">{{ project['name'] }}</option>
+            <option value="{{ project['id'] }}">{{ project['name'] }}</option>
           {% endfor %}
         </select>
         <br>
         <button type="submit">Go</button>
       </form>
+      <div id="dataset-loader" style="display: none;">Loading...</div>
 
       <div id="visualization"></div>
       <div id="options">
@@ -43,6 +44,7 @@
     </div>
 
     <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="js/datasets.js"></script>
     <script src="js/box.js"></script>
     <script src="js/mut_viz.js"></script>
   </body>

@@ -1,14 +1,15 @@
+#!/usr/bin/r
 library(deconstructSigs)
 library(SignatureEstimation)
 library(BSgenome.Hsapiens.UCSC.hg19)
 
 selected_columns <- c("icgc_sample_id", "chromosome", "chromosome_start", "reference_genome_allele", "mutated_to_allele")
 
-brca_somatic_mutations_path_eu <- "~/Documents/UMD/Fall2017/lrgr/ICGC_DCC/release_23/Projects/BRCA-EU/simple_somatic_mutation.open.BRCA-EU.tsv"
-brca_somatic_mutations_eu <- read.table(brca_somatic_mutations_path_eu, sep = '\t', header = TRUE, colClasses = c("factor"))
+somatic_mutations_path <- "/app/data_temp/extracted_data.tsv"
+somatic_mutations <- read.table(somatic_mutations_path, sep = '\t', header = TRUE, colClasses = c("factor"))
 
 
-brca_somatic_mutations_eu_stripped <- brca_somatic_mutations_eu[, which(names(brca_somatic_mutations_eu) %in% selected_columns)]
+somatic_mutations_stripped <- somatic_mutations[, which(names(somatic_mutations) %in% selected_columns)]
 
 sample.name.to.id <- function(sample.name) {
   return(as.numeric(gsub("SA", "", as.character(sample.name))))
@@ -22,15 +23,15 @@ start.numeric <- function(start.input) {
   return(as.numeric(as.character(start.input)))
 }
 
-brca_somatic_mutations_eu_stripped[,2] <- sapply(brca_somatic_mutations_eu_stripped[,2], chr.prefix)
-brca_somatic_mutations_eu_stripped[,3] <- sapply(brca_somatic_mutations_eu_stripped[,3], start.numeric)
-brca_somatic_mutations_eu_stripped[,4] <- sapply(brca_somatic_mutations_eu_stripped[,4], as.character)
-brca_somatic_mutations_eu_stripped[,5] <- sapply(brca_somatic_mutations_eu_stripped[,5], as.character)
+somatic_mutations_stripped[,2] <- sapply(somatic_mutations_stripped[,2], chr.prefix)
+somatic_mutations_stripped[,3] <- sapply(somatic_mutations_stripped[,3], start.numeric)
+somatic_mutations_stripped[,4] <- sapply(somatic_mutations_stripped[,4], as.character)
+somatic_mutations_stripped[,5] <- sapply(somatic_mutations_stripped[,5], as.character)
 
-# brca_somatic_mutations <- brca_somatic_mutations[!(brca_somatic_mutations$chromosome=="chrMT"),]
+# somatic_mutations_stripped <- somatic_mutations_stripped[!(somatic_mutations_stripped$chromosome=="chrMT"),]
 
 sigs.input <- mut.to.sigs.input(
-  mut.ref = brca_somatic_mutations_eu_stripped,
+  mut.ref = somatic_mutations_stripped,
   sample.id = "icgc_sample_id",
   chr = "chromosome",
   pos = "chromosome_start",
@@ -50,3 +51,5 @@ for (i in 1:ncol(tricontext.fractions)) {
 }
 
 #boxplot.matrix(as.matrix(signature.distributions))
+
+write.csv(t(signature.distributions), file = "/app/static/data/signature_distributions_t.csv")

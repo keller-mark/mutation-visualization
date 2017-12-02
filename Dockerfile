@@ -5,8 +5,7 @@ COPY requirements.txt /app/requirements.txt
 WORKDIR /app
 RUN pip install -r requirements.txt
 
-# If STATIC_INDEX is 1, serve / with /static/index.html directly (or the static URL configured)
-ENV STATIC_INDEX 1
+ENV STATIC_INDEX 0
 
 ## Use Debian unstable via pinning -- new style via APT::Default-Release
 RUN echo "deb http://http.us.debian.org/debian sid main" > /etc/apt/sources.list.d/debian-unstable.list \
