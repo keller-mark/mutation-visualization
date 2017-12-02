@@ -1,13 +1,26 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>BRCA Mutation Signatures</title>
+    <title>Cancer Mutation Signatures</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
   </head>
   <body>
 
     <div class="container">
-      <h1>BRCA Mutation Signatures</h1>
+      <h1>Cancer Mutation Signatures</h1>
+
+      <form class="dataset-form">
+        <label>Select ICGC Project:</label>
+        <br>
+        <select name="dataset_id">
+          {% for project in icgc_ssm_projects %}
+          <option value="{{ project['id'] }}">{{ project['name'] }}</option>
+          {% endfor %}
+        </select>
+        <br>
+        <button type="submit">Go</button>
+      </form>
+
       <div id="visualization"></div>
       <div id="options">
         <input type="checkbox" id="switch" /><label for="switch"></label>

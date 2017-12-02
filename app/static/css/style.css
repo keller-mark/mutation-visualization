@@ -157,3 +157,7 @@ input[type=range]::-moz-range-thumb {
 .matrix-column-highlight {
   fill: red;
 }
+
+.dataset-form {
+  padding-left: 10px;
+}

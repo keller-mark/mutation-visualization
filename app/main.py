@@ -1,19 +1,15 @@
 import os
+from icgc import ICGC
 
-from flask import Flask, send_file
+from flask import Flask, send_file, render_template
+
 app = Flask(__name__)
-
-
-@app.route("/hello")
-def hello():
-    return "Hello World from Flask in a uWSGI Nginx Docker container with \
-     Python 3.6 (from the example template)"
 
 
 @app.route("/")
 def main():
-    index_path = os.path.join(app.static_folder, 'index.html')
-    return send_file(index_path)
+    
+    return render_template('index.html', icgc_ssm_projects=ICGC.get_ssm_projects())
 
 
 # Everything not declared before (not a Flask route / API endpoint)...
@@ -26,10 +22,9 @@ def route_frontend(path):
         return send_file(file_path)
     # ...or should be handled by the SPA's "router" in front end
     else:
-        index_path = os.path.join(app.static_folder, 'index.html')
-        return send_file(index_path)
+        main()
 
 
 if __name__ == "__main__":
     # Only for debugging while developing
-    app.run(host='0.0.0.0', debug=True, port=80)
+    app.run(host='0.0.0.0', debug=True, port=8080)

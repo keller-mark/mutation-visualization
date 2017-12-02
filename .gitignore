@@ -1,2 +1,5 @@
 .DS_Store
 .Rhistory
+venv
+.vscode
+__pycache__
