@@ -12,25 +12,12 @@ datasetForm.addEventListener('submit', function(e) {
 
     toggleDatasetForm(false);
 
-    var socket = io.connect('http://' + document.domain);
-    socket.on('connect', function() {
-        if(datasetID != currDataset) {
-            socket.emit('start_load_dataset', formData);
-            currDataset = datasetID;
-        }
-    });
-
-    socket.on('finish_load_dataset', function(msg) {
-        console.log(msg);
-        toggleDatasetForm(true);
-        socket.disconnect();
-    });
-
-    /*d3.json("/dataset-select")
+    d3.json("/dataset-select")
         .post(formData, function(error, text) {
             if (error) throw error;
             toggleDatasetForm(true);
-        });*/
+            loadNewCSV(true);
+        });
 });
 
 function toggleDatasetForm(val) {

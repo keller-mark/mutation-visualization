@@ -30,26 +30,37 @@ jitterCheckbox.addEventListener('change', function() {
     }
 });
 
+window.onload = loadNewCSV(false);
+
 // Read the signature distribution data into the data array, then create box plots
-d3.csv("data/signature_distributions_t.csv", function(error, csv) {
-  var data = vizState["data"];
+function loadNewCSV(new_dataset) {
+  var filename = "signature_distributions_t.csv";
+  if(!new_dataset) {
+    filename = "brca_" + filename;
+  } else {
+    removeBoxPlotsAndAxes();
+  }
+  console.log(filename);
+  d3.csv("data/" + filename, function(error, csv) {
+    vizState["data"] = [];
 
-  if (error) throw error;
+    if (error) throw error;
 
-  csv.forEach(function(row) {
-    var specimens = []
-    for(var key in row) {
-      var sigContribution = +row[key];
+    csv.forEach(function(row) {
+      var specimens = []
+      for(var key in row) {
+        var sigContribution = +row[key];
 
-      if(!isNaN(sigContribution)) {
-        specimens.push(sigContribution);
+        if(!isNaN(sigContribution)) {
+          specimens.push(sigContribution);
+        }
       }
-    }
-    data.push(specimens);
-  });
+      vizState["data"].push(specimens);
+    });
 
-  createBoxPlots();
-});
+    createBoxPlots();
+  });
+}
 
 // Returns a function to compute the interquartile range.
 function iqr(k) {

@@ -3,7 +3,6 @@ import requests
 import shutil
 import gzip
 import subprocess
-import threading
 
 class ICGC():
     
@@ -47,22 +46,14 @@ class ICGC():
         return new_filename
     
     @staticmethod
-    def deconstruct_sigs(dataset_filename, onExit):
+    def deconstruct_sigs(dataset_filename):
         # Call R script to compute signature contributions
         # Possibly port this to python in the future
-        
-        def runInThread(onExit):
-            proc = subprocess.Popen(["r", "/app/r/deconstruct.r"])
-            proc.wait()
-            try:
-                onExit()
-                print("OnExit successful")
-            except OSError:
-                print("Error: onExit not successful")
+        try:
+            subprocess.check_call(["r", "/app/r/deconstruct.r"])
+            
+        except subprocess.CalledProcessError:
+            print("Error: r process not successful")
                 
-            return
-        
-        thread = threading.Thread(target=runInThread, args=(onExit,))
-        thread.start()
-
         return
+
