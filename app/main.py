@@ -5,15 +5,23 @@ from icgc import ICGC
 from flask import Flask, send_file, render_template, request, jsonify
 from flask_socketio import SocketIO, send, emit
 
+from celery import Celery
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
+
+celery_app = Celery('background_computation', broker='redis://redis_db:6379')
 
 @socketio.on('start_load_dataset')
 def load_dataset(message):
     print('START LOAD DATASET: ' + str(message))
     dataset_id = json.loads(message)['dataset_id']
     dataset_filename = ICGC.download_dataset(dataset_id)
+    background_computation(dataset_filename)
+
+@celery_app.task
+def background_computation(dataset_filename):
     ICGC.deconstruct_sigs(
         dataset_filename, 
         lambda: socketio.emit('finish_load_dataset', {'data': 'done'})
@@ -24,16 +32,9 @@ def load_dataset(message):
 def main():
     return render_template('index.html', icgc_ssm_projects=ICGC.get_ssm_projects())
 
-"""@app.route("/dataset-select", methods=['POST'])
-def dataset_select():
-    form_data = request.get_json(force=True)
-    dataset_id = form_data['dataset_id']
-    dataset_filename = ICGC.download_dataset(dataset_id)
-    ICGC.deconstruct_sigs(dataset_filename)
-    return jsonify({"success": True})"""
 
 # Everything not declared before (not a Flask route / API endpoint)...
-@app.route('/<path:path>')
+@app.route('/static/<path:path>')
 def route_frontend(path):
     # ...could be a static file needed by the front end that
     # doesn't use the `static` path (like in `<script src="bundle.js">`)
@@ -46,6 +47,6 @@ def route_frontend(path):
 
 
 if __name__ == "__main__":
-    socketio.run(app)
     # Only for debugging while developing
     app.run(host='0.0.0.0', debug=True, port=80)
+    socketio.run(app)

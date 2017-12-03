@@ -24,13 +24,9 @@ datasetForm.addEventListener('submit', function(e) {
         console.log(msg);
         toggleDatasetForm(true);
         socket.disconnect();
+        loadNewCSV(true);
     });
 
-    /*d3.json("/dataset-select")
-        .post(formData, function(error, text) {
-            if (error) throw error;
-            toggleDatasetForm(true);
-        });*/
 });
 
 function toggleDatasetForm(val) {

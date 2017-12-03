@@ -43,3 +43,5 @@ RUN pip install -r requirements.txt
 ENV STATIC_INDEX 0
 
 COPY ./app /app
+
+#ENTRYPOINT celery multi start -A main.celery_app worker --loglevel=info
