@@ -3,18 +3,34 @@ var datasetFormSelect = document.getElementById('dataset-form_select');
 
 var datasetLoader = document.getElementById('dataset-loader');
 
+var currDataset = "BRCA-EU";
+
 datasetForm.addEventListener('submit', function(e) {
     e.preventDefault();
     var datasetID = datasetFormSelect.options[datasetFormSelect.selectedIndex].value;
-    var postData = JSON.stringify({dataset_id: datasetID});
+    var formData = JSON.stringify({dataset_id: datasetID});
 
     toggleDatasetForm(false);
 
-    d3.json("/dataset-select")
-        .post(postData, function(error, text) {
+    var socket = io.connect('http://' + document.domain);
+    socket.on('connect', function() {
+        if(datasetID != currDataset) {
+            socket.emit('start_load_dataset', formData);
+            currDataset = datasetID;
+        }
+    });
+
+    socket.on('finish_load_dataset', function(msg) {
+        console.log(msg);
+        toggleDatasetForm(true);
+        socket.disconnect();
+    });
+
+    /*d3.json("/dataset-select")
+        .post(formData, function(error, text) {
             if (error) throw error;
             toggleDatasetForm(true);
-        });
+        });*/
 });
 
 function toggleDatasetForm(val) {

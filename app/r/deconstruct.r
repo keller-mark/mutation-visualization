@@ -28,7 +28,7 @@ somatic_mutations_stripped[,3] <- sapply(somatic_mutations_stripped[,3], start.n
 somatic_mutations_stripped[,4] <- sapply(somatic_mutations_stripped[,4], as.character)
 somatic_mutations_stripped[,5] <- sapply(somatic_mutations_stripped[,5], as.character)
 
-# somatic_mutations_stripped <- somatic_mutations_stripped[!(somatic_mutations_stripped$chromosome=="chrMT"),]
+somatic_mutations_stripped <- somatic_mutations_stripped[!(somatic_mutations_stripped$chromosome=="chrMT"),]
 
 sigs.input <- mut.to.sigs.input(
   mut.ref = somatic_mutations_stripped,

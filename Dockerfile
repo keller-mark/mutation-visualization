@@ -1,12 +1,5 @@
 FROM tiangolo/uwsgi-nginx-flask:python3.6
 
-# Install Python packages
-COPY requirements.txt /app/requirements.txt
-WORKDIR /app
-RUN pip install -r requirements.txt
-
-ENV STATIC_INDEX 0
-
 ## Use Debian unstable via pinning -- new style via APT::Default-Release
 RUN echo "deb http://http.us.debian.org/debian sid main" > /etc/apt/sources.list.d/debian-unstable.list \
 	&& echo 'APT::Default-Release "testing";' > /etc/apt/apt.conf.d/default
@@ -36,5 +29,17 @@ RUN Rscript -e "install.packages(\"GenSA\")"
 
 RUN curl -L https://www.ncbi.nlm.nih.gov/CBBresearch/Przytycka/software/signatureestimation/SignatureEstimation.tar.gz | tar xz
 RUN Rscript -e "install.packages(\"./SignatureEstimation\", repos = NULL, type = \"source\")"
+
+
+# Copy the modified Nginx conf
+COPY nginx.conf /etc/nginx/conf.d/
+
+
+# Install Python packages
+COPY requirements.txt /app/requirements.txt
+WORKDIR /app
+RUN pip install -r requirements.txt
+
+ENV STATIC_INDEX 0
 
 COPY ./app /app
