@@ -13,6 +13,7 @@ var chart = d3.box()
 // Initialize state object
 var vizState = {
   "data": [],
+  "masterData": [],
   "exposureThreshold": 0.00,
   "jitterPlots": false,
   "jitterRands": [],
@@ -42,7 +43,7 @@ function loadNewCSV(new_dataset) {
   }
   console.log(filename);
   d3.csv("data/" + filename, function(error, csv) {
-    vizState["data"] = [];
+    vizState["masterData"] = [];
 
     if (error) throw error;
 
@@ -55,8 +56,10 @@ function loadNewCSV(new_dataset) {
           specimens.push(sigContribution);
         }
       }
-      vizState["data"].push(specimens);
+      vizState["masterData"].push(specimens);
     });
+
+    vizState["data"] = vizState["masterData"];
 
     createBoxPlots();
   });
@@ -175,9 +178,9 @@ function boxPlotAxisX() {
           boxPlot.attr("display", "none");
           sigToggleContainer.select("text").text("+");
           // TODO: update other plots to reflect plot removal
+          subtractSignature(i);
         }
-      })
-      .attr("display", "none");
+      });
 
     // Create button background
     sigToggleContainer.append("circle")
@@ -200,6 +203,25 @@ function boxPlotAxisX() {
 
   // Highlight specific signatures
   // d3.select(xAxisGroup[0][4]).attr("stroke", "blue");
+}
+
+function subtractSignature(targetSigIndex) {
+  var data = vizState["data"];
+  var masterData = vizState["masterData"]
+  var targetedSig = masterData[targetSigIndex];
+  var numSigs = masterData.length;
+  for(var sigIndex = 0; sigIndex < data.length; sigIndex++) {
+    currSig = data[sigIndex];
+    if(sigIndex != targetSigIndex) {
+      for(var specimenIndex = 0; specimenIndex < data[sigIndex].length; specimenIndex++) {
+        data[sigIndex][specimenIndex] -= targetedSig[specimenIndex] / numSigs;
+      }
+    } else {
+      data[sigIndex] = [];
+    }
+  }
+  vizState["data"] = data;
+  redrawVisualization();
 }
 
 // Remove all "points of interest" tooltips (from entire chart)
