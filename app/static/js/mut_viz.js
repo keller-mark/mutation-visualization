@@ -41,7 +41,7 @@ function loadNewCSV(new_dataset) {
   } else {
     removeBoxPlotsAndAxes();
   }
-  console.log(filename);
+  
   d3.csv("data/" + filename, function(error, csv) {
     vizState["masterData"] = [];
 
@@ -201,8 +201,6 @@ function boxPlotAxisX() {
   // Remove axis line
   d3.select(".x-axis path").remove();
 
-  // Highlight specific signatures
-  // d3.select(xAxisGroup[0][4]).attr("stroke", "blue");
 }
 
 function subtractSignature(targetSigIndex) {
@@ -214,7 +212,7 @@ function subtractSignature(targetSigIndex) {
     currSig = data[sigIndex];
     if(sigIndex != targetSigIndex) {
       for(var specimenIndex = 0; specimenIndex < data[sigIndex].length; specimenIndex++) {
-        data[sigIndex][specimenIndex] -= targetedSig[specimenIndex] / numSigs;
+        data[sigIndex][specimenIndex] += targetedSig[specimenIndex] / numSigs;
       }
     } else {
       data[sigIndex] = [];
@@ -353,35 +351,7 @@ function createBoxPlots() {
       .attr("width", vizWidth - (yAxisWidth/2))
     .append("g").attr("id", "box-container");
 
-    var data = vizState["data"];
-    var exposureThreshold = vizState["exposureThreshold"];
-
-    var boxContainer = d3.select("#visualization").select("#box-container");
-
-    // Filter data based on threshold, then call chart to create each plot
-    boxContainer.selectAll("svg")
-        .data(data.map(function(sigData) {
-          return sigData.filter(function(sigDataPoint) {
-            return sigDataPoint >= exposureThreshold;
-          });
-        }))
-      .enter().append("svg")
-        .attr("class", "box")
-        .attr("width", boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right)
-        .attr("height", boxPlotHeight + boxPlotMargin.bottom + boxPlotMargin.top)
-        .attr("x", function(d, i) { return ((boxPlotWidth + boxPlotMargin.left + boxPlotMargin.right) * i)})
-        .attr("y", 0)
-      .append("g")
-        .attr("transform", "translate(" + boxPlotMargin.left + "," + boxPlotMargin.top + ")")
-        .call(chart) // Create each plot using d3.box
-        .on('mouseover', showPlotTooltips);
-
-    // Set mouseleave for visualization to clear all tooltips
-    d3.select("#visualization")
-      .on("mouseleave", function() {
-        // Remove existing tooltips
-        d3.select(this).selectAll(".box-text").remove();
-      });
+    redrawBoxPlots();
 
   boxPlotAxisX();
 
