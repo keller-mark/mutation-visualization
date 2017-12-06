@@ -41,7 +41,7 @@ function loadNewCSV(new_dataset) {
   } else {
     removeBoxPlotsAndAxes();
   }
-  
+
   d3.csv("data/" + filename, function(error, csv) {
     vizState["masterData"] = [];
 
@@ -170,14 +170,13 @@ function boxPlotAxisX() {
       .on("click", function() {
         // Toggle box plot visibility
         var boxPlot = d3.select("#visualization").select("svg.box:nth-child(" + (i + 1) + ")");
-        var boxPlotHidden = (boxPlot.attr("display") == "none");
-        if(boxPlotHidden) {
+        if(isBoxPlotHidden(i)) {
           boxPlot.attr("display", "normal");
           sigToggleContainer.select("text").text("-");
         } else {
           boxPlot.attr("display", "none");
           sigToggleContainer.select("text").text("+");
-          // TODO: update other plots to reflect plot removal
+
           subtractSignature(i);
         }
       });
@@ -201,6 +200,10 @@ function boxPlotAxisX() {
   // Remove axis line
   d3.select(".x-axis path").remove();
 
+}
+
+function isBoxPlotHidden(i) {
+  return (vizState["data"][i].length == 0);
 }
 
 function subtractSignature(targetSigIndex) {
@@ -408,30 +411,32 @@ function addJitterPlots() {
         for(var boxIndex = 0; boxIndex < boxes[0].length; boxIndex++) {
             var currentBox = d3.select(boxes[0][boxIndex]);
 
-            var patientJitterDotText = currentBox.append("text")
-              .text(data[boxIndex][jitterDotIndex].toFixed(2))
-              .attr("class", "patient-jitter-text")
-              .attr("text-anchor", "middle")
-              .attr("x", boxPlotMargin.left + (boxPlotWidth/2))
-              .attr("y", boxPlotHeight + boxPlotMargin.top + 18)
-              .attr("font-size", "12px")
-              .attr("fill", "blue");
+            if(!isBoxPlotHidden(boxIndex)) {
+              var patientJitterDotText = currentBox.append("text")
+                .text(data[boxIndex][jitterDotIndex].toFixed(2))
+                .attr("class", "patient-jitter-text")
+                .attr("text-anchor", "middle")
+                .attr("x", boxPlotMargin.left + (boxPlotWidth/2))
+                .attr("y", boxPlotHeight + boxPlotMargin.top + 18)
+                .attr("font-size", "12px")
+                .attr("fill", "blue");
 
-            var overlayPatientJitterDot = currentBox.append("circle")
-              .attr("class", "patient-jitter-dot")
-              .attr("r", 6)
-              .attr("cx", jitterRands[jitterDotIndex])
-              .attr("cy", scatterYMap(data[boxIndex][jitterDotIndex]))
-              .style("stroke-width", 1.5)
-              .style("stroke", "#fff")
-              .style("fill", "blue")
-              .style("opacity", "1");
+              var overlayPatientJitterDot = currentBox.append("circle")
+                .attr("class", "patient-jitter-dot")
+                .attr("r", 6)
+                .attr("cx", jitterRands[jitterDotIndex])
+                .attr("cy", scatterYMap(data[boxIndex][jitterDotIndex]))
+                .style("stroke-width", 1.5)
+                .style("stroke", "#fff")
+                .style("fill", "blue")
+                .style("opacity", "1");
 
               if(i == boxIndex) {
                 overlayPatientJitterDot.on("mouseleave", function() {
                   removePatientJitterDots();
                 });
               }
+            }
         }
       });
   });
